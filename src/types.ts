@@ -9,6 +9,7 @@ export type Question = {
 
 export type AnswerRecord = {
   questionId: number;
+  question: Question;
   selectedAnswer: 'V' | 'F';
   isCorrect: boolean;
 };

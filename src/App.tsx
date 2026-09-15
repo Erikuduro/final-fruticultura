@@ -1,20 +1,16 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useState } from 'react';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { QuizScreen } from './components/QuizScreen';
 import { ResultScreen } from './components/ResultScreen';
 import { questions } from './data';
-import { AnswerRecord } from './types';
+import { AnswerRecord, Question } from './types';
 import { AnimatePresence, motion } from 'motion/react';
 
 type AppState = 'welcome' | 'playing' | 'result';
 
 export default function App() {
   const [appState, setAppState] = useState<AppState>('welcome');
+  const [activeQuestions, setActiveQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [records, setRecords] = useState<AnswerRecord[]>([]);
   
@@ -22,7 +18,8 @@ export default function App() {
   const [hasAnswered, setHasAnswered] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<'V' | 'F' | null>(null);
 
-  const handleStart = () => {
+  const handleStart = (selectedQuestions: Question[]) => {
+    setActiveQuestions(selectedQuestions);
     setAppState('playing');
     setCurrentIndex(0);
     setRecords([]);
@@ -30,15 +27,27 @@ export default function App() {
     setSelectedAnswer(null);
   };
 
+  const handleRestart = () => {
+    setAppState('welcome');
+  };
+
+  const handleRetryWrong = () => {
+    const wrongQuestions = records.filter(r => !r.isCorrect).map(r => r.question);
+    handleStart(wrongQuestions);
+  };
+
   const handleAnswer = (answer: 'V' | 'F') => {
     if (hasAnswered) return;
-    const isCorrect = answer === questions[currentIndex].answer;
+    const currentQuestion = activeQuestions[currentIndex];
+    const isCorrect = answer === currentQuestion.answer;
+    
     setSelectedAnswer(answer);
     setHasAnswered(true);
     setRecords((prev) => [
       ...prev,
       {
-        questionId: questions[currentIndex].id,
+        questionId: currentQuestion.id,
+        question: currentQuestion,
         selectedAnswer: answer,
         isCorrect,
       },
@@ -46,7 +55,7 @@ export default function App() {
   };
 
   const handleNext = () => {
-    if (currentIndex < questions.length - 1) {
+    if (currentIndex < activeQuestions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       setHasAnswered(false);
       setSelectedAnswer(null);
@@ -56,7 +65,7 @@ export default function App() {
   };
 
   return (
-    <div className="font-sans text-slate-900 antialiased selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden">
+    <div className="font-sans text-slate-900 antialiased selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden min-h-screen bg-slate-50">
       <AnimatePresence mode="wait">
         {appState === 'welcome' && (
           <motion.div
@@ -66,11 +75,11 @@ export default function App() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <WelcomeScreen onStart={handleStart} totalQuestions={questions.length} />
+            <WelcomeScreen onStart={handleStart} allQuestions={questions} />
           </motion.div>
         )}
         
-        {appState === 'playing' && (
+        {appState === 'playing' && activeQuestions.length > 0 && (
           <motion.div
             key={`question-${currentIndex}`}
             initial={{ opacity: 0, x: 20 }}
@@ -79,9 +88,9 @@ export default function App() {
             transition={{ duration: 0.3 }}
           >
             <QuizScreen
-              question={questions[currentIndex]}
+              question={activeQuestions[currentIndex]}
               currentIndex={currentIndex}
-              totalQuestions={questions.length}
+              totalQuestions={activeQuestions.length}
               hasAnswered={hasAnswered}
               selectedAnswer={selectedAnswer}
               onAnswer={handleAnswer}
@@ -98,7 +107,11 @@ export default function App() {
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4 }}
           >
-            <ResultScreen records={records} onRestart={handleStart} />
+            <ResultScreen 
+              records={records} 
+              onRestart={handleRestart}
+              onRetryWrong={handleRetryWrong}
+            />
           </motion.div>
         )}
       </AnimatePresence>
