@@ -1,6 +1,6 @@
 {
   "name": "Simulado de Fruticultura",
-  "description": "Simulado online com 60 questões de Verdadeiro ou Falso sobre Abacaxi, Maracujá, Mamão, Manga e Banana.",
+  "description": "Simulado online interativo com mais de 160 questões de Verdadeiro ou Falso retiradas de provas e bancos de estudo sobre Abacaxi, Maracujá, Mamão, Manga e Banana.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
